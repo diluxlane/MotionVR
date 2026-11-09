@@ -1,0 +1,10 @@
+# Local/editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+.vercel/
+.env
+.env.*
+node_modules/
