@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071018">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="MotionVR — Private VR Video Player">
+  <meta property="og:description" content="A free, privacy-first experimental VR video player for mobile browsers. Play local videos, test device orientation, and explore 180°/360° modes.">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <meta name="description" content="Private, free browser VR video player with motion-based head orientation, local files, and direct video links.">
+  <title>MotionVR — Private VR Video Player</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="logo"><span class="logo-emblem" aria-hidden="true">◉</span><span>MOTION<span class="logo-accent">VR</span></span></div>
+      <span class="head-tag">PRIVATE BY DESIGN <span class="dot">·</span> FREE PROTOTYPE</span>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div class="eyebrow"><span class="pulse"></span> VR WITHOUT A GYROSCOPE — EXPERIMENTAL</div>
+        <h1>Look around. <span>Stay immersed.</span></h1>
+        <p>Watch your own videos in a virtual cinema or a 360° scene. Uses your browser's available orientation data, with touch as a fallback. No login, upload, or tracking scripts.</p>
+      </section>
+
+      <section class="theater" id="theater" aria-label="VR player">
+        <canvas id="scene" aria-label="Interactive VR video scene"></canvas>
+        <div class="player-grid" aria-hidden="true"></div>
+        <div class="empty" id="empty">
+          <div class="empty-symbol" aria-hidden="true"><svg viewBox="0 0 90 90" width="90" height="90" fill="none"><rect x="10" y="25" width="70" height="40" rx="17" stroke="currentColor" stroke-width="2.5"/><path d="M16 45H74" stroke="currentColor" opacity=".2"/><circle cx="30" cy="45" r="11" stroke="currentColor" stroke-width="2"/><circle cx="60" cy="45" r="11" stroke="currentColor" stroke-width="2"/><path d="M42 42Q45 39 48 42" stroke="currentColor" stroke-width="2"/></svg></div>
+          <strong>Your private VR cinema</strong>
+          <span>Choose a video below to start</span>
+        </div>
+        <div class="reticle" id="reticle" aria-hidden="true"></div>
+        <div class="vr-hud" id="vrHud">
+          <button class="hud-button" id="hudPlay" title="Play or pause" aria-label="Play or pause">⏯</button>
+          <button class="hud-button" id="hudCenter" title="Recenter view" aria-label="Recenter view">⊙</button>
+          <button class="hud-button" id="hudExit" title="Exit headset mode" aria-label="Exit headset mode">×</button>
+        </div>
+        <div class="overlay-bottom">
+          <span class="live-label" id="liveLabel"><i></i> AWAITING VIDEO</span>
+          <span class="mode-label" id="modeLabel">CINEMA / MONO</span>
+        </div>
+      </section>
+
+      <div class="playerbar">
+        <button id="playPause" class="icon-button" aria-label="Play or pause" disabled>▶</button>
+        <span class="time" id="timeNow">0:00</span>
+        <input id="seek" class="seek" type="range" min="0" max="1000" value="0" aria-label="Seek" disabled>
+        <span class="time" id="timeTotal">0:00</span>
+        <button id="mute" class="icon-button" aria-label="Mute or unmute" disabled>◖))</button>
+        <button id="fullscreen" class="subtle-button" title="Fullscreen">⛶ Fullscreen</button>
+      </div>
+
+      <div class="columns">
+        <section class="panel">
+          <div class="panel-head"><span class="number">01</span><h2>Video source</h2></div>
+          <p class="help">Files stay on your phone. Direct links must point to a supported video file and allow browser cross-origin playback.</p>
+          <label class="file-zone" for="localFile">
+            <span class="file-symbol" aria-hidden="true">↥</span>
+            <span><strong>Choose video from device</strong><small>MP4, WebM, or another browser-supported format</small></span>
+            <input id="localFile" type="file" accept="video/*,.mp4,.webm,.m4v,.mov">
+          </label>
+          <div class="or"><span>OR DIRECT VIDEO URL</span></div>
+          <div class="url-row"><input id="videoUrl" type="url" placeholder="https://example.com/video.mp4" spellcheck="false" autocomplete="off" aria-label="Direct video URL"><button id="loadUrl" class="button light">Load</button></div>
+          <div class="file-name" id="fileName">No video selected</div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><span class="number">02</span><h2>Orientation tracking</h2></div>
+          <p class="help">Motion is read locally. If your phone lacks compass heading, tilt may work while turning left/right does not.</p>
+          <div class="sensor-state"><span class="sensor-light" id="sensorLight"></span><div><strong id="sensorStatus">Motion not enabled</strong><small id="sensorDetail">Enable, then rotate the phone and inspect the readings.</small></div></div>
+          <button id="enableMotion" class="button primary full">Enable motion sensors <span>↗</span></button>
+          <div class="readings"><div><span>α · HEADING</span><strong id="alpha">—</strong></div><div><span>β · TILT</span><strong id="beta">—</strong></div><div><span>γ · ROLL</span><strong id="gamma">—</strong></div></div>
+          <div class="button-pair"><button id="recenter" class="button secondary">⊙ Recenter</button><button id="touchToggle" class="button secondary" aria-pressed="true">Touch: ON</button></div>
+        </section>
+      </div>
+
+      <section class="panel settings">
+        <div class="panel-head"><span class="number">03</span><h2>Viewing setup</h2></div>
+        <div class="settings-grid">
+          <label class="field">Video projection<select id="projection"><option value="cinema">Virtual cinema (regular video)</option><option value="360">360° equirectangular</option><option value="180">180° equirectangular</option></select></label>
+          <label class="field">Video stereoscopy<select id="layout"><option value="mono">Normal 2D (mono)</option><option value="sbs">Side by side (SBS) 3D</option><option value="tb">Top / bottom 3D</option></select></label>
+          <label class="field">Field of view <span id="fovValue">75°</span><input id="fov" type="range" min="45" max="110" value="75" step="1"></label>
+          <label class="field">Motion smoothing <span id="smoothValue">Medium</span><input id="smooth" type="range" min="0" max="100" value="60" step="1"></label>
+        </div>
+        <div class="headset-footer"><div><strong>VR box mode</strong><small>Split-screen view for phone-based VR headsets. Use landscape orientation. A headset with lens adjustment is recommended.</small></div><button id="enterVr" class="button primary">🥽 Enter VR mode</button></div>
+      </section>
+
+      <div class="message" id="message" role="status" aria-live="polite">Ready. Choose a video and enable motion to test your phone.</div>
+
+      <section class="info"><h3>What this player can — and cannot — do</h3><div class="info-grid"><div><b>✓</b><span>Private local files and direct video links</span></div><div><b>✓</b><span>360° viewing, 180° and stereo headset layouts</span></div><div><b>✓</b><span>Browser sensor tracking where available; touch fallback</span></div><div><b>!</b><span>No real eye tracking; center reticle is head-gaze only</span></div><div><b>!</b><span>Not all browsers expose compass heading without a gyro</span></div><div><b>!</b><span>No YouTube page URLs, DRM, arbitrary websites or guaranteed MKV codecs</span></div></div></section>
+    </main>
+    <footer>MotionVR · Experimental source-available prototype · No ads · No analytics · Video data is never uploaded by this app</footer>
+  </div>
+  <video id="sourceVideo" playsinline preload="metadata" crossorigin="anonymous"></video>
+  <script src="./app.js" defer></script>
+</body>
+</html>
