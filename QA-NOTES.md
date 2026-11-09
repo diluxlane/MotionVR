@@ -28,3 +28,12 @@
 8. Test that direct remote URLs without CORS show a clear error rather than attempting a secret bypass.
 
 **Not production-approved:** fully validated headset playback requires real-device testing and optical calibration. No real eye tracking is implemented.
+
+## 2026-11-09 Tracking stabilization
+
+- Corrected sensor rotation composition from `current * inverse(initial)` to `inverse(initial) * current`.
+- Prevented absolute/relative coordinate-frame mismatches across browser sensor source switches.
+- Added a small stationary-jitter threshold and isolated large heading-jump rejection.
+- Heading diagnostics now require a meaningful excursion; tiny alpha noise does not imply working 360-degree turning.
+- Added Node.js quaternion math tests in `tests/tracking.test.cjs`.
+- **Phone yaw, camera optical flow, WebGL output and headset comfort are still unverified.** Camera tracking is research only.
