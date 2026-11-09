@@ -49,7 +49,7 @@ void main() {
   vec2 norm = 2.0 * vUv - 1.0;
   vec3 ray = normalize(vec3(norm.x * uAspect * uTanFov, norm.y * uTanFov, -1.0));
   vec3 direction = normalize(rotate(ray, uQuat));
-  vec3 background = mix(vec3(0.008, 0.015, 0.024), vec3(0.035, 0.061, 0.075), clamp(0.55 + direction.y * 0.45, 0.0, 1.0));
+  vec3 background = mix(vec3(0.0, 0.0, 0.0), vec3(0.118, 0.122, 0.133), clamp(0.55 + direction.y * 0.45, 0.0, 1.0));
   vec2 sampleUv;
   bool visible = true;
   if (uProjection == 0) {
@@ -64,7 +64,7 @@ void main() {
       visible = all(greaterThanEqual(sampleUv, vec2(0.0))) && all(lessThanEqual(sampleUv, vec2(1.0)));
       if (!visible) {
         float edge = max(abs(onScreen.x / halfWidth), abs(onScreen.y / halfHeight));
-        background += vec3(0.011,0.025,0.023) * exp(-max(0.0,edge - 1.0) * 21.0);
+        background += vec3(0.018,0.018,0.018) * exp(-max(0.0,edge - 1.0) * 21.0);
       }
     }
   } else {
