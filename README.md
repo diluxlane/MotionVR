@@ -54,3 +54,13 @@ MIT. This prototype is provided AS IS, without warranty, and is not a certified 
 **Recommended:** a separate public `diluxlane/MotionVR` repository and a Vercel static project. The files are at the root. Import into Vercel with framework **Other** and **no build command**, then deploy. The `vercel.json` file sets privacy-oriented headers without disabling browser motion sensors. The default `.vercel.app` domain provides HTTPS.
 
 Do not add third-party tracking, upload endpoints, or undocumented remote proxies. Do not advertise real eye tracking or gyroscope-equivalent tracking until hardware-validated. Do not confuse the interface's head-gaze crosshair with optical eye tracking.
+
+## Tracking improvements and camera research
+
+The sensor-only renderer now uses `inverse(initial) × current` for recentered relative device orientation, suppresses sub-degree jitter, filters isolated implausible heading jumps, and reports a meaningful heading excursion rather than treating a tiny compass fluctuation as proof of full yaw tracking. Real-device results remain unverified.
+
+### Camera-assisted tracking — proposed research, not implemented
+
+A user-authorized rear-camera optical-flow experiment could estimate *relative* orientation from features tracked across consecutive low-resolution frames. Calibrated angular displacement could be combined with gravity/compass measurements and filtered according to visual-tracking confidence, but this would not provide true eye tracking, universally accurate 360° yaw, or six-degree-of-freedom positional VR. Occluded cameras, darkness, blank walls, fast turns, limited camera frame rates and accumulated drift are significant limitations. A headset may physically cover the rear camera.
+
+If implemented, require an explicit on/off permission gesture, capture no audio, process frames entirely locally, upload or store no imagery, stop all camera tracks on disable/page hide, and clearly label tracking as experimental. The Android geomagnetic rotation-vector API remains a more direct accelerometer-plus-magnetometer option when the device exposes it.
