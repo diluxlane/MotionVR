@@ -7,3 +7,7 @@
 /* Royal Charcoal theme: subtle monochrome controls without changing layout. */
 .icon-button:hover,.subtle-button:hover,.hud-button:hover{background:var(--marble);border-color:var(--marble)}
 button:focus-visible,.url-row input:focus-visible,.field select:focus-visible{outline:2px solid var(--white);outline-offset:2px}
+
+/* Optional hardware preview CTA: no effect on headset playback. */
+.intro .hardware-preview-link{margin-top:22px;text-decoration:none;max-width:100%;white-space:normal;text-align:center;line-height:1.4}
+.intro .hardware-preview-link:focus-visible{outline:2px solid var(--marble);outline-offset:3px}
