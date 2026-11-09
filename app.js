@@ -17,7 +17,7 @@ const state = {
   touchYaw: 0, touchPitch: 0, touchEnabled: true,
   dragging: false, pointerX: 0, pointerY: 0, lastAlpha: null,
   lastAcceptedAlpha: null, lastAcceptedAt: 0, orientationSource: null,
-  fov: 75, smoothing: 60, projection: 'cinema', layout: 'mono'
+  fov: 75, smoothing: 60, projection: '360', layout: 'mono'
 };
 
 const vshader = `
@@ -417,7 +417,7 @@ video.addEventListener('loadedmetadata',async()=>{
   $('empty').hidden=true;
   for(const id of ['playPause','mute','seek']) $(id).disabled=false;
   refreshPlayback();
-  notify(`Video loaded (${video.videoWidth} × ${video.videoHeight}). Press Play. Select the correct source projection and stereo layout.`);
+  notify(`Video loaded (${video.videoWidth} × ${video.videoHeight}). ${state.projection==='360' ? '360° immersive view selected: no virtual screen. It requires true equirectangular 360° footage.' : 'Choose the correct projection and stereo layout for the video.'} Press Play.`);
 });
 video.addEventListener('error',()=>{state.hasVideo=false;notify('Could not load this video. Check the file/URL, browser codec support, HTTPS, and CORS for remote sources.','error');});
 video.addEventListener('timeupdate',refreshPlayback);
