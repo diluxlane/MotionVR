@@ -16,6 +16,7 @@ const state = {
   sensorQ: [0,0,0,1], baseQ: null, smoothQ: [0,0,0,1],
   touchYaw: 0, touchPitch: 0, touchEnabled: true,
   dragging: false, pointerX: 0, pointerY: 0, lastAlpha: null,
+  lastAcceptedAlpha: null, lastAcceptedAt: 0, orientationSource: null,
   fov: 75, smoothing: 60, projection: 'cinema', layout: 'mono'
 };
 
@@ -175,24 +176,44 @@ function handleOrientation(event, absoluteEvent = false) {
   const now = performance.now();
   if (absoluteEvent || event.absolute) { state.gotAbsolute = true; state.lastAbsoluteAt = now; }
   if (!absoluteEvent && !event.absolute && now-state.lastAbsoluteAt < 1200) return;
-  const alpha = typeof event.alpha === 'number' ? event.alpha : 0;
+  const source = absoluteEvent || event.absolute ? 'absolute' : 'relative';
+  const alpha = Number.isFinite(event.alpha) ? event.alpha : 0;
+  // Some magnetometers intermittently return implausible heading jumps.
+  // Ignore isolated spikes rather than letting the headset snap violently.
+  if (Number.isFinite(event.alpha) && state.lastAcceptedAlpha != null) {
+    const jump = Math.abs(((alpha - state.lastAcceptedAlpha + 540) % 360) - 180);
+    if (jump > 75 && now - state.lastAcceptedAt < 130) return;
+  }
+  if (state.orientationSource && source !== state.orientationSource) {
+    // Do not compare relative and absolute coordinate frames directly.
+    state.baseQ = null;
+  }
+  state.orientationSource = source;
+  if (Number.isFinite(event.alpha)) {
+    state.lastAcceptedAlpha = alpha;
+    state.lastAcceptedAt = now;
+  }
   state.sensorQ = sensorQuaternion(alpha, event.beta, event.gamma);
   state.sensorReceived = true;
   state.lastSensorAt = now;
   if (!state.baseQ) state.baseQ = state.sensorQ.slice();
-  // A null alpha or fixed alpha means yaw cannot be verified.
-  if (state.lastAlpha != null && event.alpha != null) {
-    const delta = Math.abs(((event.alpha-state.lastAlpha+540)%360)-180);
-    if (delta > 1) state.alphaSamples.push(now);
-  }
+  // A real 10+ degree heading excursion is more meaningful than tiny alpha jitter.
+  // Alpha changing is still only a hint, not proof of accurate 360-degree tracking.
+  if (Number.isFinite(event.alpha)) state.alphaSamples.push({time:now, angle:alpha});
   state.lastAlpha = event.alpha;
-  state.alphaSamples = state.alphaSamples.filter(t=>now-t<15000);
+  state.alphaSamples = state.alphaSamples.filter(sample=>now-sample.time<10000);
+  const headings = state.alphaSamples.map(sample=>sample.angle * Math.PI / 180);
+  const s = headings.reduce((t,a)=>t+Math.sin(a),0), c = headings.reduce((t,a)=>t+Math.cos(a),0);
+  const center = Math.atan2(s,c)*180/Math.PI;
+  const offsets = state.alphaSamples.map(sample=>((sample.angle-center+540)%360)-180);
+  const headingRange = offsets.length ? Math.max(...offsets)-Math.min(...offsets) : 0;
+  const headingChanged = headingRange>=12;
   if (now-state.lastTelemetryAt > 180) {
     $('alpha').textContent = event.alpha == null ? 'N/A' : `${alpha.toFixed(1)}°`;
     $('beta').textContent = `${event.beta.toFixed(1)}°`;
     $('gamma').textContent = `${event.gamma.toFixed(1)}°`;
     $('sensorStatus').textContent = state.gotAbsolute ? 'Orientation available (absolute)' : 'Orientation available';
-    $('sensorDetail').textContent = event.alpha == null ? 'Heading missing. Tilt only.' : (state.alphaSamples.length ? 'Heading changed. Check if view follows your turns.' : 'Heading not yet verified. Rotate left and right.');
+    $('sensorDetail').textContent = !Number.isFinite(event.alpha) ? 'No heading supplied: tilt works, horizontal turns may not.' : (headingChanged ? 'Heading changed 12°+. Verify left/right direction with a 360° video.' : 'Heading not verified yet. Rotate left and right by 30°+.');
     $('sensorLight').className = 'sensor-light active';
     state.lastTelemetryAt = now;
   }
@@ -329,14 +350,23 @@ function draw(timestamp) {
     }
   }
   let sensorDelta=[0,0,0,1];
-  if (state.sensorReceived && state.baseQ) sensorDelta=qMultiply(state.sensorQ,qInverse(state.baseQ));
+  if (state.sensorReceived && state.baseQ) {
+    // Both quaternions map device space to world space. Recenter into the
+    // initial device frame: q_relative = inverse(q_initial) * q_current.
+    // The previous order gave rotations in world space and could distort
+    // yaw on a tilted/landscape-mounted phone.
+    sensorDelta=qMultiply(qInverse(state.baseQ),state.sensorQ);
+  }
   const touchQ=qFromEuler(state.touchPitch,state.touchYaw,0);
   const target=qNormalize(qMultiply(sensorDelta,touchQ));
   const elapsed=state.lastFrameAt?Math.min(60,timestamp-state.lastFrameAt):16.67;
   state.lastFrameAt=timestamp;
   const responsiveness=0.58-(state.smoothing/100)*0.51;
   const factor=1-Math.pow(1-responsiveness,elapsed/16.67);
-  state.smoothQ=qSlerp(state.smoothQ,target,factor);
+  // Suppress sub-degree sensor noise at rest without hiding real head turns.
+  const separation=Math.abs(state.smoothQ[0]*target[0]+state.smoothQ[1]*target[1]+state.smoothQ[2]*target[2]+state.smoothQ[3]*target[3]);
+  const angle=2*Math.acos(Math.min(1,Math.max(-1,separation)));
+  if (angle>0.0035) state.smoothQ=qSlerp(state.smoothQ,target,factor);
   gl.useProgram(state.program);
   gl.uniform4fv(u.uQuat,new Float32Array(state.smoothQ));
   gl.uniform1f(u.uTanFov,Math.tan(state.fov*Math.PI/360));
