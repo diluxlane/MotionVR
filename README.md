@@ -64,3 +64,9 @@ The sensor-only renderer now uses `inverse(initial) × current` for recentered r
 A user-authorized rear-camera optical-flow experiment could estimate *relative* orientation from features tracked across consecutive low-resolution frames. Calibrated angular displacement could be combined with gravity/compass measurements and filtered according to visual-tracking confidence, but this would not provide true eye tracking, universally accurate 360° yaw, or six-degree-of-freedom positional VR. Occluded cameras, darkness, blank walls, fast turns, limited camera frame rates and accumulated drift are significant limitations. A headset may physically cover the rear camera.
 
 If implemented, require an explicit on/off permission gesture, capture no audio, process frames entirely locally, upload or store no imagery, stop all camera tracks on disable/page hide, and clearly label tracking as experimental. The Android geomagnetic rotation-vector API remains a more direct accelerometer-plus-magnetometer option when the device exposes it.
+
+## Full immersive 360° (no virtual cinema screen)
+
+MotionVR defaults to **Immersive 360°** instead of Virtual Cinema. Use an actual equirectangular 360° MP4/WebM (typically approximately 2:1 for monoscopic footage), and select **Video projection → Immersive 360° — inside the video**. Choose **Normal 2D (mono)** for a regular panoramic video; VR Box Mode duplicates the same surround view for both eyes. This is 3DoF rotational viewing, not stereo depth or physical movement through the filmed scene. Ordinary flat videos cannot be made genuinely 360° by changing modes: select **Virtual cinema — floating screen** for those. The VR shader and sensor tracking are unchanged by this default-mode improvement.
+
+Official A-Frame public 360° test media: `https://cdn.aframe.io/360-video-boilerplate/video/city.mp4`. The asset project documents CORS-enabled serving, but compatibility should still be checked on each device.
