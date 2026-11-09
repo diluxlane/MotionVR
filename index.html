@@ -60,7 +60,7 @@
       <div class="columns">
         <section class="panel">
           <div class="panel-head"><span class="number">01</span><h2>Video source</h2></div>
-          <p class="help">Files stay on your phone. Direct links must point to a supported video file and allow browser cross-origin playback.</p>
+          <p class="help">Files stay on your phone. Direct links need compatible codecs and cross-origin access for WebGL. Use a real 360° video for immersive viewing.</p>
           <label class="file-zone" for="localFile">
             <span class="file-symbol" aria-hidden="true">↥</span>
             <span><strong>Choose video from device</strong><small>MP4, WebM, or another browser-supported format</small></span>
@@ -84,7 +84,7 @@
       <section class="panel settings">
         <div class="panel-head"><span class="number">03</span><h2>Viewing setup</h2></div>
         <div class="settings-grid">
-          <label class="field">Video projection<select id="projection"><option value="cinema">Virtual cinema (regular video)</option><option value="360">360° equirectangular</option><option value="180">180° equirectangular</option></select></label>
+          <label class="field">Video projection<select id="projection"><option value="360" selected>Immersive 360° — inside the video</option><option value="cinema">Virtual cinema — floating screen</option><option value="180">Immersive 180° — front hemisphere</option></select></label>
           <label class="field">Video stereoscopy<select id="layout"><option value="mono">Normal 2D (mono)</option><option value="sbs">Side by side (SBS) 3D</option><option value="tb">Top / bottom 3D</option></select></label>
           <label class="field">Field of view <span id="fovValue">75°</span><input id="fov" type="range" min="45" max="110" value="75" step="1"></label>
           <label class="field">Motion smoothing <span id="smoothValue">Medium</span><input id="smooth" type="range" min="0" max="100" value="60" step="1"></label>
